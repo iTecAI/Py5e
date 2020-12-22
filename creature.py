@@ -128,7 +128,8 @@ class Creature(BaseObject):
             'immunities':immunities,
             'resistances':resistances,
             'vulnerabilities':vulnerabilities,
-            'condition_immunities':condition_immunities
+            'condition_immunities':condition_immunities,
+            'effects':[]
         }
         return cls(dct)
 
@@ -194,6 +195,8 @@ class Creature(BaseObject):
         self.resistances = [i for i in resistances if i['type'] in DAMAGETYPES and all([x in DAMAGEFLAGS for x in i['flags']])]
         self.vulnerabilities = [i for i in vulnerabilities if i['type'] in DAMAGETYPES and all([x in DAMAGEFLAGS for x in i['flags']])]
         self.condition_immunities = [i for i in condition_immunities if i in CONDITIONS]
+
+        self.effects = dct['effects']
     
     def get_modifier(self,skill_or_ability,save=False):
         if skill_or_ability in ABILITIES:

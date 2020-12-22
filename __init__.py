@@ -2,7 +2,7 @@ from common import *
 from creature import Creature
 import json
 
-c = Creature.from_parameters(
+'''c = Creature.from_parameters(
     name='Orc',
     alignment='lawful neutral',
     creature_type={'type':'humanoid','tags':['orc']},
@@ -27,4 +27,4 @@ c = Creature.from_parameters(
 print(json.dumps(c.to_dict(),indent=4))
 
 c2 = Creature(c.to_dict())
-print(json.dumps(c2.to_dict(),indent=4))
+print(json.dumps(c2.to_dict(),indent=4))'''
