@@ -273,4 +273,3 @@ class NPC(Creature):
             }),
             cdict['reactions']
         )
-    
