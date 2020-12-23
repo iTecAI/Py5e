@@ -1,3 +1,7 @@
+import random
+import d20
+import json
+
 class BaseObject:
     def __init__(self):
         pass
@@ -90,3 +94,12 @@ def condition(test,t,f):
         return t
     else:
         return f
+    
+def split_on(string,seps):
+    ret = string.split(seps.pop())
+    for sep in seps:
+        nret = []
+        for item in ret:
+            nret.extend(item.split(sep))
+        ret = nret[:]
+    return ret

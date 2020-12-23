@@ -39,7 +39,7 @@ INPUTS = [
     'proficiency_bonus',
     'speeds', # dict {'speed name':'speed',...}
     'max_hp',
-    'scores', # dict of 'ability name':[score(int),save_proficient(bool),advantage/none/disadvantage(1/0/-1)]
+    'scores', # dict of 'ability name':[score(int),save_proficient(bool),advantage/none/disadvantage(1/0/-1),(optional)value]
     'skills', # dict of 'skill name':[proficient(bool),expert(bool),advantage/none/disadvantage(1/0/-1),(optional)value]
     'senses', # dict {'sense name':'distance',...}
     'immunities', # list of {'type':'damage type', 'flags':['magical','adamantine',etc]}
@@ -53,10 +53,11 @@ def _get_mod_from_score(score):
 
 class Creature(BaseObject):
     @classmethod
-    def from_parameters(
+    def creature_from_parameters(
         cls,
         name=None,
         alignment=None,
+        size=None,
         creature_type=None,
         proficiency_bonus=None,
         speeds=None,
@@ -68,14 +69,20 @@ class Creature(BaseObject):
         immunities=[],
         resistances=[],
         vulnerabilities=[],
-        condition_immunities=[]
+        condition_immunities=[],
+        languages=[]
     ):
         abilities = {}
         for i in scores.keys():
+            if len(scores[i]) == 4:
+                save_override = scores[i][3]
+            else:
+                save_override = None
             abilities[i] = {
                 'score':int(scores[i][0]),
                 'save_proficient':bool(scores[i][1]),
-                'save_advantage':int(scores[i][2])
+                'save_advantage':int(scores[i][2]),
+                'save_override':save_override
             }
         
         _skills = {}
@@ -116,6 +123,7 @@ class Creature(BaseObject):
         dct = {
             'name':name,
             'alignment':alignment,
+            'size':size,
             'creature_type':creature_type['type'],
             'tags':creature_type['tags'],
             'proficiency_bonus':proficiency_bonus,
@@ -129,15 +137,56 @@ class Creature(BaseObject):
             'resistances':resistances,
             'vulnerabilities':vulnerabilities,
             'condition_immunities':condition_immunities,
+            'languages':languages,
             'effects':[]
         }
-        return cls(dct)
+        return dct
+    
+    @classmethod
+    def from_parameters(
+        cls,
+        name=None,
+        alignment=None,
+        size=None,
+        creature_type=None,
+        proficiency_bonus=None,
+        speeds=None,
+        max_hp=None,
+        armor_class=None,
+        scores=None,
+        skills=None,
+        senses={},
+        immunities=[],
+        resistances=[],
+        vulnerabilities=[],
+        condition_immunities=[],
+        languages=[]
+    ):
+        return cls(cls.creature_from_parameters(
+            name=name,
+            alignment=alignment,
+            size=size,
+            creature_type=creature_type,
+            proficiency_bonus=proficiency_bonus,
+            speeds=speeds,
+            max_hp=max_hp,
+            armor_class=armor_class,
+            scores=scores,
+            skills=skills,
+            senses=senses,
+            immunities=immunities,
+            resistances=resistances,
+            vulnerabilities=vulnerabilities,
+            condition_immunities=condition_immunities,
+            languages=languages
+        ))
 
     def __init__(self,dct):
         super().__init__()
 
         name = dct['name']
         alignment = dct['alignment']
+        size = dct['size']
         creature_type = dct['creature_type']
         tags = dct['tags']
         proficiency_bonus = dct['proficiency_bonus']
@@ -154,6 +203,7 @@ class Creature(BaseObject):
 
         self.name = name
         self.alignment = alignment
+        self.size = size
         
         self.creature_type = creature_type
         self.tags = tags
@@ -190,6 +240,7 @@ class Creature(BaseObject):
         self.skills = skills
         
         self.senses = senses
+        self.languages = dct['languages']
 
         self.immunities = [i for i in immunities if i['type'] in DAMAGETYPES and all([x in DAMAGEFLAGS for x in i['flags']])]
         self.resistances = [i for i in resistances if i['type'] in DAMAGETYPES and all([x in DAMAGEFLAGS for x in i['flags']])]
@@ -198,26 +249,91 @@ class Creature(BaseObject):
 
         self.effects = dct['effects']
     
-    def get_modifier(self,skill_or_ability,save=False):
+    def get_modifier(self,skill_or_ability,ability_override='',save=False):
         if skill_or_ability in ABILITIES:
             if save:
-                return int((self.abilities[skill_or_ability]['score']-10)/2)+condition(self.abilities[skill_or_ability]['save_proficient'],self.proficiency_bonus,0)
+                if self.abilities[skill_or_ability]['save_override'] != None:
+                    return int(self.abilities[skill_or_ability]['save_override'])
+                else:
+                    return int((self.abilities[skill_or_ability]['score']-10)/2)+condition(self.abilities[skill_or_ability]['save_proficient'],self.proficiency_bonus,0)
             else:
                 return int((self.abilities[skill_or_ability]['score']-10)/2)
         elif skill_or_ability in SKILLS.keys():
             if self.skills[skill_or_ability]['override']:
                 return self.skills[skill_or_ability]['value']
             else:
+                if ability_override in ABILITIES:
+                    ability = ability_override
+                else:
+                    ability = self.skills[skill_or_ability]['ability']
                 self.skills[skill_or_ability]['value'] = sum([
-                    self.get_modifier(self.skills[skill_or_ability]['ability']),
+                    self.get_modifier(ability),
                     condition(self.skills[skill_or_ability]['proficient'],self.proficiency_bonus,0),
                     condition(self.skills[skill_or_ability]['expert'] and self.skills[skill_or_ability]['proficient'],self.proficiency_bonus,0)
                 ])
                 return self.skills[skill_or_ability]['value']
         else:
             raise KeyError(f'Skill or ability "{skill_or_ability}" not found.')
-
+    
+    def check(self,skill_or_ability,ability_override='',advantage_override=0):
+        check = self.get_modifier(skill_or_ability,ability_override=ability_override)
+        return d20.roll('d20'+condition(check>0,'+','')+condition(check==0,'',str(check)),advantage=condition(advantage_override in [-1,0,1],advantage_override,0)).total
+    
+    def save(self,ability,advantage_override=0):
+        save = self.get_modifier(ability,save=True)
+        return d20.roll('d20'+condition(save>0,'+','')+condition(save==0,'',str(save)),advantage=condition(advantage_override in [-1,0,1],advantage_override,0)).total
+    
+    def initiative(self):
+        check = self.get_modifier('dexterity')
+        return d20.roll('d20'+condition(check>0,'+','')+condition(check==0,'',str(check))).total
         
+class Action(BaseObject):
+    def __init__(self,dct):
+        super().__init__()
+        self.automated = dct['automated']
+        self.damages = dct['damages']
+        self.name = dct['name']
+        self.desc = dct['desc']
+        self.bonus = dct['bonus']
+        self.type = dct['type']
+        self.range = dct['range']
+    
+    @classmethod
+    def from_open5e_damage(cls,ddct):
+        try:
+            desc = ddct['desc']
+            _type = desc.split(' Attack: ')[0]
+            _range = desc.split(' Attack: ')[1].split('. Hit: ')[0].split(', ')[1].split(' ')[1]
+            if '/' in _range:
+                _range = [int(i) for i in _range.split('/')]
+            else:
+                _range = int(_range)
+            
+            damage = []
+            for d in split_on(desc.split('. Hit: ')[1],[' plus ',' and ']):
+                parts = split_on(d,[' (',') '])
+                damage.append({
+                    'average':int(parts[0]),
+                    'roll':parts[1].replace(' ',''),
+                    'type':[x for x in DAMAGETYPES if x in d.split(' ')][0]
+                })
 
-
-
+            return cls({
+                'automated':True,
+                'damages':damage,
+                'name':ddct['name'],
+                'desc':ddct['desc'],
+                'bonus':ddct['attack_bonus'],
+                'type':_type,
+                'range':_range
+            })
+        except:
+            return cls({
+                'automated':False,
+                'damages':[],
+                'name':ddct['name'],
+                'desc':ddct['desc'],
+                'bonus':0,
+                'type':'',
+                'range':0
+            })
