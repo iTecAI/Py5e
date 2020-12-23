@@ -286,6 +286,55 @@ class Creature(BaseObject):
     def initiative(self):
         check = self.get_modifier('dexterity')
         return d20.roll('d20'+condition(check>0,'+','')+condition(check==0,'',str(check))).total
+    
+    def take_attack(self,atk,adv=0):
+        if atk.automated:
+            attack = d20.roll('d20'+condition(atk.bonus>=0,'+'+str(atk.bonus),str(atk.bonus)),advantage=adv).total
+            if attack >= self.armor_class.current:
+                for damage in atk.damages:
+                    if len(damage['type'].split(':')) > 1:
+                        flags = damage['type'].split(':')[1:]
+                    else:
+                        flags = ['nonmagical']
+                    dtype = damage['type'].split(':')[0]
+                    
+                    dmod = 1
+                    for i in self.immunities:
+                        if i['type'] == dtype:
+                            if len(i['flags']) > 0:
+                                for x in i['flags']:
+                                    if x in flags or (x.startswith('!') and not x in flags):
+                                        dmod = 0
+                                        break
+                            else:
+                                dmod = 0
+                            break
+                    
+                    for i in self.resistances:
+                        if i['type'] == dtype:
+                            if len(i['flags']) > 0:
+                                for x in i['flags']:
+                                    if x in flags or (x.startswith('!') and not x in flags):
+                                        dmod = 0.5
+                                        break
+                            else:
+                                dmod = 0.5
+                            break
+                    
+                    for i in self.vulnerabilities:
+                        if i['type'] == dtype:
+                            if len(i['flags']) > 0:
+                                for x in i['flags']:
+                                    if x in flags or (x.startswith('!') and not x in flags):
+                                        dmod = 2
+                                        break
+                            else:
+                                dmod = 2
+                            break
+                    
+                    self.hit_points.current -= d20.roll(damage['roll']).total*dmod
+        else:
+            return
         
 class Action(BaseObject):
     def __init__(self,dct):
