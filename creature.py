@@ -337,3 +337,43 @@ class Action(BaseObject):
                 'type':'',
                 'range':0
             })
+    @classmethod
+    def from_critterdb_damage(cls,ddct):
+        try:
+            desc = ddct['description'].replace('<i>','').replace('</i>','')
+            _type = desc.split(' Attack: ')[0]
+            _range = desc.split(' Attack: ')[1].split('. Hit: ')[0].split(', ')[1].split(' ')[1]
+            bonus = int(desc.split(' Attack: ')[1].split('. Hit: ')[0].split(', ')[0].split(' ')[0].strip('+ '))
+            if '/' in _range:
+                _range = [int(i) for i in _range.split('/')]
+            else:
+                _range = int(_range)
+            
+            damage = []
+            for d in split_on(desc.split('. Hit: ')[1],[' plus ',' and ']):
+                parts = split_on(d,[' (',') '])
+                damage.append({
+                    'average':int(parts[0]),
+                    'roll':parts[1].replace(' ',''),
+                    'type':[x for x in DAMAGETYPES if x in d.split(' ')][0]
+                })
+
+            return cls({
+                'automated':True,
+                'damages':damage,
+                'name':ddct['name'],
+                'desc':desc,
+                'bonus':bonus,
+                'type':_type,
+                'range':_range
+            })
+        except:
+            return cls({
+                'automated':False,
+                'damages':[],
+                'name':ddct['name'],
+                'desc':ddct['description'].replace('<i>','').replace('</i>',''),
+                'bonus':0,
+                'type':'',
+                'range':0
+            })

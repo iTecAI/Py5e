@@ -159,9 +159,118 @@ class NPC(Creature):
             }),
             condition(dict5e['reactions']=='',[],dict5e['reactions'])
         )
+    
+    @classmethod
+    def from_pycritter(cls,cdict,roll_hp=False):
+        _cdict = cdict.copy()
+        cdict = cdict['stats']
+        speeds = {}
+        for s in cdict['speed'].split(' ft., '):
+            item = s.split(' ')
+            if len(item) == 1:
+                speeds['walk'] = int(item[0])
+            elif len(item) == 2:
+                speeds[item[0]] = int(item[1])
+        
+        scores = {}
+        for ability in ABILITIES:
+            scores[ability] = [
+                cdict['abilityScores'][ability],
+                any([x['ability']==ability and x['proficient'] for x in cdict['savingThrows']]),
+                False
+            ]
+            for n in cdict['savingThrows']:
+                if 'value' in n.keys():
+                    scores[ability].append(n['value'])
+        
+        skills = {}
+        for skill in cdict['skills']:
+            if skill['name'].lower() in SKILLS.keys():
+                skills[skill['name']] = [skill['proficient'],False,0]
+                if 'value' in skill.keys():
+                    skills[skill['name']].append(skill['value'])
+        
+        immunities = []
+        for i in cdict['damageImmunities']:
+            for d in DAMAGETYPES:
+                if d in i.lower():
+                    item = {
+                        'type':d,
+                        'flags':[]
+                    }
+                    for f in DAMAGEFLAGS:
+                        if f in i.lower():
+                            if f"aren't {f}" in i.lower():
+                                item['flags'].append('!'+f)
+                            else:
+                                item['flags'].append(f)
+                    immunities.append(item)
+        resistances = []
+        for i in cdict['damageResistances']:
+            for d in DAMAGETYPES:
+                if d in i.lower():
+                    item = {
+                        'type':d,
+                        'flags':[]
+                    }
+                    for f in DAMAGEFLAGS:
+                        if f in i.lower():
+                            if f"aren't {f}" in i.lower():
+                                item['flags'].append('!'+f)
+                            else:
+                                item['flags'].append(f)
+                    resistances.append(item)
+        vulnerabilities = []
+        for i in cdict['damageVulnerabilities']:
+            for d in DAMAGETYPES:
+                if d in i.lower():
+                    item = {
+                        'type':d,
+                        'flags':[]
+                    }
+                    for f in DAMAGEFLAGS:
+                        if f in i.lower():
+                            if f"aren't {f}" in i.lower():
+                                item['flags'].append('!'+f)
+                            else:
+                                item['flags'].append(f)
+                    vulnerabilities.append(item)
+        
+        actions = []
+        if cdict['actions'] != '':
+            for i in cdict['actions']:
+                actions.append(Action.from_critterdb_damage(i))
 
-npc = NPC.from_open5e(requests.get(open5e_url,params={'search':'adult green dragon'}).json()['results'][0])
-npc2 = NPC(npc.to_dict())
-print(json.dumps(npc.to_dict(),indent=4))
-print(json.dumps(npc2.to_dict(),indent=4))
+        return cls.from_parameters(
+            _cdict['name'],
+            cdict['alignment'].lower(),
+            cdict['size'],
+            {
+                'type':cdict['race'].lower(),
+                'tags':[]
+            },
+            cdict['proficiencyBonus'],
+            speeds,
+            condition(roll_hp,
+                d20.roll(str(cdict['numHitDie'])+'d'+str(cdict['hitDieSize'])+'+'+str(cdict['numHitDie']*int((scores['constitution'][0]-10)/2))).total,
+                int(((cdict['hitDieSize']+1)/2)*cdict['numHitDie'])+int((scores['constitution'][0]-10)/2)
+            ),
+            cdict['armorClass'],
+            scores,
+            skills,
+            {x.split(' ')[0]:int(x.split(' ')[1]) for x in cdict['senses'] if x.endswith('ft.')},
+            immunities,
+            resistances,
+            vulnerabilities,
+            [i.lower() for i in cdict['conditionImmunities'] if i.lower() in CONDITIONS],
+            cdict['languages'],
+            cdict['challengeRating'],
+            cdict['additionalAbilities'],
+            actions,
+            condition(len(cdict['legendaryActions'])==0,None,{
+                'description':cdict['legendaryActionsDescription'],
+                'actions':cdict['legendaryActions']
+            }),
+            cdict['reactions']
+        )
     
