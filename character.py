@@ -1,6 +1,6 @@
 from common import *
 from creature import *
-import os
+import os, math
 
 class Character(Creature):
     @classmethod
@@ -33,6 +33,10 @@ class Character(Creature):
         appearance,
         inventory,
         traits,
+        attack_info,
+        gear_info,
+        race_info,
+        class_info,
         source=None
     ):
         dct = cls.creature_from_parameters(
@@ -65,6 +69,10 @@ class Character(Creature):
         dct['inventory'] = inventory
         dct['traits'] = traits
         dct['source'] = source
+        dct['attack_info'] = attack_info
+        dct['gear_info'] = gear_info
+        dct['race_info'] = race_info
+        dct['class_info'] = class_info
 
         return cls(dct)
     
@@ -181,10 +189,11 @@ class Character(Creature):
             "'attack info'!b7:ao201":'attackInfo',
             "'gear info'!b7:ao201":'gearInfo',
             "'race info'!b7:ao201":'raceInfo',
-            "'class info'!b7:ao201":'classInfo'
+            "'class info'!b7:ao201":'classInfo',
+            'v2.1!r32:r36':'attacks'
         }
         [ranges.__setitem__('v2.1!p'+str(i+17),ABILITIES[i]+'SaveAdv') for i in range(6)]
-        [ranges.__setitem__('v2.1!p'+str(i+25),list(SKILLS.keys())[i]+'SkillAdv') for i in range(17)]
+        [ranges.__setitem__('v2.1!p'+str(i+25),list(SKILLS.keys())[i]+'SkillAdv') for i in range(18)]
         [ranges.__setitem__('inventory!i'+str(i+3),'inventoryCount'+str(i)) for i in range(74)]
         [ranges.__setitem__('inventory!j'+str(i+3),'inventory'+str(i)) for i in range(74)]
         [ranges.__setitem__('inventory!r'+str(i+3),'inventoryCost'+str(i)) for i in range(74)]
@@ -289,8 +298,225 @@ class Character(Creature):
             newInfo.append({cats[i]:condition(item[i]=='-',None,item[i]) for i in range(len(item))})
         preloaded['classInfo'] = newInfo[:]
 
-        with open('preload.json','w') as f:
-            f.write(json.dumps(preloaded,indent=4))
+        preloaded['personalityTraits'] = ''.join(preloaded['personalityTraits']).strip()
+        preloaded['ideals'] = ''.join(preloaded['ideals']).strip()
+        preloaded['bonds'] = ''.join(preloaded['bonds']).strip()
+        preloaded['flaws'] = ''.join(preloaded['flaws']).strip()
+        if type(preloaded['alliesOrganizations']) == list:
+            preloaded['alliesOrganizations'] = ''.join(preloaded['alliesOrganizations']).strip()
+        if type(preloaded['backstory']) == list:
+            preloaded['backstory'] = ''.join(preloaded['backstory']).strip()
+        
+        speeds = {}
+        if not preloaded['otherSpeeds'] == None:
+            speeds = {i.split(' ')[2].lower():int(i.split(' ')[0]) for i in preloaded['otherSpeeds'].split(', ')}
+        speeds['walk'] = preloaded['speed']
 
-
-Character.from_gsheet('1Yd91902ynVYzd_wzR0mVck_ejaxwK5FTSa-EbyFtfBc',os.path.join('local','gapi.json'))
+        scores = {}
+        c = 0
+        for s in ABILITIES:
+            scores[s] = [
+                preloaded['ab'+s[0].upper()+s[1:3]],
+                bool(preloaded['saveProfs'][c]),
+                condition(
+                    preloaded[s+'SaveAdv']=='adv',
+                    1,condition(
+                        preloaded[s+'SaveAdv']=='dis',
+                        -1,0
+                    )
+                )
+            ]
+            c+=1
+        
+        skills = {}
+        c = 0
+        for s in SKILLS.keys():
+            skills[s] = [
+                preloaded['skillProfs'][c] in [1,'e'],
+                preloaded['skillProfs'][c] == 'e',
+                condition(
+                    preloaded[s+'SkillAdv']=='adv',
+                    1,condition(
+                        preloaded[s+'SkillAdv']=='dis',
+                        -1,0
+                    )
+                )
+            ]
+            c+=1
+        
+        resistances = []
+        for i in preloaded['resistances']:
+            item = {'type':None,'flags':[]}
+            for d in DAMAGETYPES:
+                if d in i.lower().split(' '):
+                    item['type'] = d
+                    break
+            for f in DAMAGEFLAGS:
+                if f in i.lower().split(' '):
+                    if 'aren\'t '+f in i.lower():
+                        item['flags'].append('!'+f)
+                    else:
+                        item['flags'].append(f)
+            resistances.append(item)
+        immunities = []
+        for i in preloaded['immunities']:
+            item = {'type':None,'flags':[]}
+            for d in DAMAGETYPES:
+                if d in i.lower().split(' '):
+                    item['type'] = d
+                    break
+            for f in DAMAGEFLAGS:
+                if f in i.lower().split(' '):
+                    if 'aren\'t '+f in i.lower():
+                        item['flags'].append('!'+f)
+                    else:
+                        item['flags'].append(f)
+            immunities.append(item)
+        vulnerabilities = []
+        for i in preloaded['vulnerabilities']:
+            item = {'type':None,'flags':[]}
+            for d in DAMAGETYPES:
+                if d in i.lower().split(' '):
+                    item['type'] = d
+                    break
+            for f in DAMAGEFLAGS:
+                if f in i.lower().split(' '):
+                    if 'aren\'t '+f in i.lower():
+                        item['flags'].append('!'+f)
+                    else:
+                        item['flags'].append(f)
+            vulnerabilities.append(item)
+        
+        classes = []
+        csplit = []
+        jnr = ''
+        for i in preloaded['classes'].split(' '):
+            jnr += ' '+i
+            if i in [str(c) for c in range(100)]:
+                csplit.append(jnr.strip())
+                jnr = ''
+        if len(jnr) > 0:
+            csplit.append(jnr.strip())
+        for c in csplit:
+            cs = c.split(' ')
+            classes.append({
+                'class':cs[len(cs)-2].lower(),
+                'subclass':condition(len(cs)>2,' '.join(cs[:len(cs)-2]).lower(),None),
+                'level':int(cs[len(cs)-1])
+            })
+        
+        sc_classes = []
+        for c in classes:
+            for i in preloaded['classInfo']:
+                if i['name'].lower() == c['class'] or str(i['subclass']).lower() == str(c['subclass']).lower():
+                    if i['spell_type'] != None:
+                        sc_classes.append({'class':c,'type':i['spell_type'].lower()})
+        
+        level_casting = {
+            'full':0,
+            'half':0,
+            'third':0,
+            'pact':0
+        }
+        multi = -1
+        for c in sc_classes:
+            if c['type'] == 'full caster':
+                level_casting['full']+=c['class']['level']
+                multi += 1
+            if c['type'] == 'half caster':
+                level_casting['half']+=c['class']['level']
+                multi += 1
+            if c['type'] == 'third caster':
+                level_casting['third']+=c['class']['level']
+                multi += 1
+            if c['type'] == 'pact magic':
+                level_casting['pact']+=c['class']['level']
+        spellcasting = {
+            'caster_classes':sc_classes,
+            'main_casting':condition(multi >= 0,{
+                'class':condition(multi > 0,'multiclass',[i['class'] for i in sc_classes if not i['type'] == 'pact_magic'][0]),
+                'levels':condition(multi > 0,level_casting['full']+math.floor(level_casting['half']/2)+math.floor(level_casting['third']/3),[i['class']['level'] for i in sc_classes if not i['type'] == 'pact_magic'][0]),
+                'slots':SPELLCASTING[condition(multi > 0,'multiclass',[i['type'] for i in sc_classes if not i['type'] == 'pact_magic'][0])][condition(multi > 0,level_casting['full']+math.floor(level_casting['half']/2)+math.floor(level_casting['third']/3),[i['class']['level'] for i in sc_classes if not i['type'] == 'pact_magic'][0])-1]
+            },None),
+            'pact_magic':condition(level_casting['pact']>0,{
+                'levels':level_casting['pact'],
+                'slots':SPELLCASTING['pact magic'][level_casting['pact']-1]
+            },None),
+            'spells':[preloaded['spell'+str(i)] for i in range(10)]
+        }
+        
+        return cls.from_parameters(
+            preloaded['name'],
+            preloaded['alignment'],
+            str(preloaded['size']).lower(),
+            {'type':'humanoid','tags':[]},
+            preloaded['proficiency'],
+            speeds,
+            preloaded['hp'],
+            preloaded['ac'],
+            scores,
+            skills,
+            [],
+            immunities,
+            resistances,
+            vulnerabilities,
+            [],
+            preloaded['languages'],
+            preloaded['race'],
+            {
+                'level':preloaded['level'],
+                'xp':preloaded['xp'],
+                'classes':classes
+            },
+            {
+                'background':preloaded['background'],
+                'personality_traits':preloaded['personalityTraits'],
+                'ideals':preloaded['ideals'],
+                'bonds':preloaded['bonds'],
+                'flaws':preloaded['flaws'],
+                'allies_and_organizations':preloaded['alliesOrganizations'],
+                'symbol':preloaded['symbolUrl'],
+                'backstory':preloaded['backstory']
+            },
+            preloaded['hitDice'].replace(' ',''),
+            preloaded['equippedItems'],
+            {
+                'armor':condition(type(preloaded['armorProfs'])==type(None),[],[x.lower() for x in str(preloaded['armorProfs']).split(', ')]),
+                'weapon':condition(type(preloaded['weaponProfs'])==type(None),[],[x.lower() for x in str(preloaded['weaponProfs']).split(', ')]),
+                'vehicle':condition(type(preloaded['vehicleProfs'])==type(None),[],[x.lower() for x in str(preloaded['vehicleProfs']).split(', ')]),
+                'tool':condition(type(preloaded['toolProfs'])==type(None),[],[x.lower() for x in str(preloaded['toolProfs']).split(', ')]),
+                'other':condition(type(preloaded['otherProfs'])==type(None),[],[x.lower() for x in str(preloaded['otherProfs']).split(', ')])
+            },
+            preloaded['attacks'],
+            spellcasting,
+            {
+                'age':preloaded['age'],
+                'height':preloaded['height'],
+                'weight':preloaded['weight'],
+                'gender':preloaded['gender'],
+                'eyes':preloaded['eyes'],
+                'hair':preloaded['hair'],
+                'image':preloaded['appearance']
+            },
+            {
+                'main':{
+                    'display_name':'Main Inventory',
+                    'coin':{
+                        'cp':condition(preloaded['coinCp']==None,0,preloaded['coinCp']),
+                        'sp':condition(preloaded['coinSp']==None,0,preloaded['coinSp']),
+                        'ep':condition(preloaded['coinEp']==None,0,preloaded['coinEp']),
+                        'gp':condition(preloaded['coinGp']==None,0,preloaded['coinGp']),
+                        'pp':condition(preloaded['coinPp']==None,0,preloaded['coinPp'])
+                    },
+                    'apply_weight':True,
+                    'removable':False,
+                    'items':preloaded['inventory']
+                }
+            },
+            preloaded['traits'],
+            preloaded['attackInfo'],
+            preloaded['gearInfo'],
+            preloaded['raceInfo'],
+            preloaded['classInfo'],
+            source=source
+        )

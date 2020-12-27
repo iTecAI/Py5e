@@ -97,7 +97,7 @@ class Creature(BaseObject):
                     value = sum([
                         _get_mod_from_score(abilities[SKILLS[i]]['score']),
                         condition(skills[i][0],proficiency_bonus,0),
-                        condition(skills[i][1] and skills[0],proficiency_bonus,0)
+                        condition(skills[i][1] and skills[i][0],proficiency_bonus,0)
                     ])
                 _skills[i] = {
                     'ability':SKILLS[i],

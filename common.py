@@ -92,6 +92,8 @@ ABILITIES = ['strength','dexterity','constitution','intelligence','wisdom','char
 
 DAMAGEFLAGS = ['magical','nonmagical','silvered','adamantine']
 
+SPELLCASTING = {"full caster": [{"spells": [2,0,0,0,0,0,0,0,0]},{"spells": [3,0,0,0,0,0,0,0,0]},{"spells": [4,2,0,0,0,0,0,0,0]},{"spells": [4,3,0,0,0,0,0,0,0]},{"spells": [4,3,2,0,0,0,0,0,0]},{"spells": [4,3,3,0,0,0,0,0,0]},{"spells": [4,3,3,1,0,0,0,0,0]},{"spells": [4,3,3,2,0,0,0,0,0]},{"spells": [4,3,3,3,1,0,0,0,0]},{"spells": [4,3,3,3,2,0,0,0,0]},{"spells": [4,3,3,3,2,1,0,0,0]},{"spells": [4,3,3,3,2,1,0,0,0]},{"spells": [4,3,3,3,2,1,1,0,0]},{"spells": [4,3,3,3,2,1,1,0,0]},{"spells": [4,3,3,3,2,1,1,1,0]},{"spells": [4,3,3,3,2,1,1,1,0]},{"spells": [4,3,3,3,2,1,1,1,1]},{"spells": [4,3,3,3,2,1,1,1,1]},{"spells": [4,3,3,3,2,2,1,1,1]},{"spells": [4,3,3,3,2,2,2,1,1]}],"half caster": [{"spells": [0,0,0,0,0]},{"spells": [2,0,0,0,0]},{"spells": [3,0,0,0,0]},{"spells": [3,0,0,0,0]},{"spells": [4,2,0,0,0]},{"spells": [4,2,0,0,0]},{"spells": [4,3,0,0,0]},{"spells": [4,3,0,0,0]},{"spells": [4,3,2,0,0]},{"spells": [4,3,2,0,0]},{"spells": [4,3,3,0,0]},{"spells": [4,3,3,0,0]},{"spells": [4,3,3,1,0]},{"spells": [4,3,3,1,0]},{"spells": [4,3,3,2,0]},{"spells": [4,3,3,2,0]},{"spells": [4,3,3,3,1]},{"spells": [4,3,3,3,1]},{"spells": [4,3,3,3,2]},{"spells": [4,3,3,3,2]}],"third caster": [{"spells": [0,0,0,0]},{"spells": [0,0,0,0]},{"spells": [2,0,0,0]},{"spells": [3,0,0,0]},{"spells": [3,0,0,0]},{"spells": [3,0,0,0]},{"spells": [4,2,0,0]},{"spells": [4,2,0,0]},{"spells": [4,2,0,0]},{"spells": [4,3,0,0]},{"spells": [4,3,0,0]},{"spells": [4,3,0,0]},{"spells": [4,3,2,0]},{"spells": [4,3,2,0]},{"spells": [4,3,2,0]},{"spells": [4,3,3,0]},{"spells": [4,3,3,0]},{"spells": [4,3,3,0]},{"spells": [4,3,3,1]},{"spells": [4,3,3,1]}],"pact magic": [{"spells": [1,0,0,0,0]},{"spells": [2,0,0,0,0]},{"spells": [0,2,0,0,0]},{"spells": [0,2,0,0,0]},{"spells": [0,0,2,0,0]},{"spells": [0,0,2,0,0]},{"spells": [0,0,0,2,0]},{"spells": [0,0,0,2,0]},{"spells": [0,0,0,0,2]},{"spells": [0,0,0,0,2]},{"spells": [0,0,0,0,3]},{"spells": [0,0,0,0,3]},{"spells": [0,0,0,0,3]},{"spells": [0,0,0,0,3]},{"spells": [0,0,0,0,3]},{"spells": [0,0,0,0,3]},{"spells": [0,0,0,0,4]},{"spells": [0,0,0,0,4]},{"spells": [0,0,0,0,4]},{"spells": [0,0,0,0,4]}],"multiclass": [{"spells": [2,0,0,0,0,0,0,0,0]},{"spells": [3,0,0,0,0,0,0,0,0]},{"spells": [4,2,0,0,0,0,0,0,0]},{"spells": [4,3,0,0,0,0,0,0,0]},{"spells": [4,3,2,0,0,0,0,0,0]},{"spells": [4,3,3,0,0,0,0,0,0]},{"spells": [4,3,3,1,0,0,0,0,0]},{"spells": [4,3,3,2,0,0,0,0,0]},{"spells": [4,3,3,3,1,0,0,0,0]},{"spells": [4,3,3,3,2,0,0,0,0]},{"spells": [4,3,3,3,2,1,0,0,0]},{"spells": [4,3,3,3,2,1,0,0,0]},{"spells": [4,3,3,3,2,1,1,0,0]},{"spells": [4,3,3,3,2,1,1,0,0]},{"spells": [4,3,3,3,2,1,1,1,0]},{"spells": [4,3,3,3,2,1,1,1,0]},{"spells": [4,3,3,3,2,1,1,1,1]},{"spells": [4,3,3,3,2,1,1,1,1]},{"spells": [4,3,3,3,2,2,1,1,1]},{"spells": [4,3,3,3,2,2,2,1,1]}]}
+
 def condition(test,t,f):
     if test:
         return t
@@ -103,7 +105,7 @@ def split_on(string,seps):
     for sep in seps:
         nret = []
         for item in ret:
-            nret.extend(item.split(sep))
+            nret.extend([i for i in item.split(sep)])
         ret = nret[:]
     return ret
 

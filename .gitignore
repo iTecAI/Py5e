@@ -131,4 +131,5 @@ dmypy.json
 cdb_unpublished.json
 cdbtest.json
 local/
+gsc.json
 preload.json
