@@ -2,6 +2,9 @@ import random
 import d20
 import json
 
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+
 class BaseObject:
     def __init__(self):
         pass
@@ -103,3 +106,7 @@ def split_on(string,seps):
             nret.extend(item.split(sep))
         ret = nret[:]
     return ret
+
+def get_gapi(path,scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']): # From https://developers.google.com/sheets/api/quickstart/python
+    creds = service_account.Credentials.from_service_account_file(path, scopes=scopes)
+    return build('sheets', 'v4', credentials=creds)

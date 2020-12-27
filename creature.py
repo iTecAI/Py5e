@@ -80,6 +80,7 @@ class Creature(BaseObject):
                 save_override = None
             abilities[i] = {
                 'score':int(scores[i][0]),
+                'score_base':int(scores[i][0]),
                 'save_proficient':bool(scores[i][1]),
                 'save_advantage':int(scores[i][2]),
                 'save_override':save_override
