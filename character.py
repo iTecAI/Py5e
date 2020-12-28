@@ -568,6 +568,85 @@ class Character(Creature):
             super().check(skill_or_ability, ability_override=ability_override, advantage_override=advantage_override),
             condition(self.check_trait('jack of all trades'),int(self.proficiency_bonus/2),0)
         ])
+    def attack(self,attack):
+        atk = self.get_attack(attack)
+        damage = [
+            {
+                'average':None,
+                'roll':atk['damage']+condition(
+                    atk['apply_mod']==1,
+                    '+'+str(sum([condition(
+                        atk['ability_override'] == None,
+                        condition(
+                            'finesse' in atk['properties'].lower() or 'ranged' in atk['range_class'].lower(),
+                            self.get_modifier('dexterity'),
+                            self.get_modifier('strength')
+                        ),
+                        ABILITY_MAP[str(atk['ability_override']).lower()]
+                    ),
+                    condition(
+                        atk['enchant_bonus']==None,
+                        0,
+                        int(atk['enchant_bonus'])
+                    )])),
+                    ''
+                ),
+                'type':atk['type']
+            }
+        ]
+        if not atk['bonus_damage'] == None:
+            damage.append({
+                {
+                'average':None,
+                'roll':atk['bonus_damage'],
+                'type':atk['bonus_type']
+            }
+            })
+        
+        _range = None
+        for item in atk['properties'].lower().split(', '):
+            if 'ammunition' in item or 'thrown' in item:
+                r = split_on(item,['(range ',')'])[1]
+                if '/' in r:
+                    _range = [int(i) for i in r.split('/')]
+                else:
+                    _range = int(r)
+                break
+        
+        blist = [
+            condition(
+                atk['ability_override'] == None,
+                condition(
+                    'finesse' in atk['properties'].lower() or 'ranged' in atk['range_class'].lower(),
+                    self.get_modifier('dexterity'),
+                    self.get_modifier('strength')
+                ),
+                ABILITY_MAP[str(atk['ability_override']).lower()]
+            ),
+            condition(
+                any([
+                    any([any([i in x for x in self.proficiencies['weapon']]) for i in atk['proficiency_category'].lower().split(' or ')]),
+                    any([atk['name'].lower() in x for x in self.proficiencies['weapon']])
+                ]),
+                self.proficiency_bonus,
+                0
+            ),
+            condition(
+                atk['enchant_bonus']==None,
+                0,
+                int(atk['enchant_bonus'])
+            )
+        ]
+
+        return Action({
+            'automated':True,
+            'damages':damage,
+            'name':atk['name'],
+            'desc':atk['properties'],
+            'bonus':sum(blist),
+            'type':atk['proficiency_category'].lower(),
+            'range':_range
+        })
 
 c = Character.from_gsheet('1Yd91902ynVYzd_wzR0mVck_ejaxwK5FTSa-EbyFtfBc',os.path.join('local','gapi.json'))
 with open('gsc.json','w') as f:
@@ -577,3 +656,4 @@ print(c.check_feat('dual wielder'))
 print(c.check_trait('cold resistance'))
 print(c.initiative())
 print(c.get_attack(c.attacks[0]))
+print(c.attack('tarath warhammer').to_dict())

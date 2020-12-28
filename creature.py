@@ -139,7 +139,8 @@ class Creature(BaseObject):
             'vulnerabilities':vulnerabilities,
             'condition_immunities':condition_immunities,
             'languages':languages,
-            'effects':[]
+            'effects':[],
+            'conditions':[]
         }
         return dct
     
@@ -249,6 +250,7 @@ class Creature(BaseObject):
         self.condition_immunities = [i for i in condition_immunities if i in CONDITIONS]
 
         self.effects = dct['effects']
+        self.conditions = dct['conditions']
     
     def get_modifier(self,skill_or_ability,ability_override='',save=False):
         if skill_or_ability in ABILITIES:
