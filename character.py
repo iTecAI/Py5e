@@ -90,6 +90,10 @@ class Character(Creature):
         self.inventory = dct['inventory']
         self.traits = dct['traits']
         self.source = dct['source']
+        self.attack_info = dct['attack_info']
+        self.gear_info = dct['gear_info']
+        self.race_info = dct['race_info']
+        self.class_info = dct['class_info']
     
     @classmethod
     def from_gsheet(cls,sheet_id,api_path):
@@ -298,10 +302,10 @@ class Character(Creature):
             newInfo.append({cats[i]:condition(item[i]=='-',None,item[i]) for i in range(len(item))})
         preloaded['classInfo'] = newInfo[:]
 
-        preloaded['personalityTraits'] = ''.join(preloaded['personalityTraits']).strip()
-        preloaded['ideals'] = ''.join(preloaded['ideals']).strip()
-        preloaded['bonds'] = ''.join(preloaded['bonds']).strip()
-        preloaded['flaws'] = ''.join(preloaded['flaws']).strip()
+        preloaded['personalityTraits'] = ''.join(condition(preloaded['personalityTraits']==None,[],preloaded['personalityTraits'])).strip()
+        preloaded['ideals'] = ''.join(condition(preloaded['ideals']==None,[],preloaded['ideals'])).strip()
+        preloaded['bonds'] = ''.join(condition(preloaded['bonds']==None,[],preloaded['bonds'])).strip()
+        preloaded['flaws'] = ''.join(condition(preloaded['flaws']==None,[],preloaded['flaws'])).strip()
         if type(preloaded['alliesOrganizations']) == list:
             preloaded['alliesOrganizations'] = ''.join(preloaded['alliesOrganizations']).strip()
         if type(preloaded['backstory']) == list:
@@ -520,3 +524,56 @@ class Character(Creature):
             preloaded['classInfo'],
             source=source
         )
+    
+    def check_feat(self,name):
+        for i in self.traits:
+            if i.lower() == 'feat: '+name.lower():
+                return True
+        return False
+    def check_trait(self,name):
+        for i in self.traits:
+            if i.lower() == name.lower():
+                return True
+        return False
+    def get_attack(self,name):
+        for i in self.attack_info:
+            if i['name'].lower() == name.lower():
+                return i
+        raise KeyError(f'Attack {name} not found.')
+    def get_gear(self,name):
+        for i in self.gear_info:
+            if i['name'].lower() == name.lower():
+                return i
+        raise KeyError(f'Gear {name} not found.')
+    def get_race(self,name):
+        for i in self.race_info:
+            if i['name'].lower() == name.lower():
+                return i
+        raise KeyError(f'Race {name} not found.')
+    def get_class(self,name,subclass=None):
+        for i in self.class_info:
+            if i['name'].lower() == name.lower():
+                if str(subclass).lower() == str(i['subclass']).lower():
+                    return i
+        raise KeyError(f'Class {name} with subclass {subclass} not found.')
+    def initiative(self):
+        return sum([
+            super().initiative(),
+            condition(self.check_feat('alert'),5,0),
+            sum([condition(self.get_class(i['class'],subclass=i['subclass'])['init_bonus']==None,0,self.get_class(i['class'],subclass=i['subclass'])['init_bonus']) for i in self.level['classes']]),
+            condition(self.check_trait('jack of all trades'),int(self.proficiency_bonus/2),0)
+        ])
+    def check(self, skill_or_ability, ability_override, advantage_override):
+        return sum([
+            super().check(skill_or_ability, ability_override=ability_override, advantage_override=advantage_override),
+            condition(self.check_trait('jack of all trades'),int(self.proficiency_bonus/2),0)
+        ])
+
+c = Character.from_gsheet('1Yd91902ynVYzd_wzR0mVck_ejaxwK5FTSa-EbyFtfBc',os.path.join('local','gapi.json'))
+with open('gsc.json','w') as f:
+    json.dump(c.to_dict(),f,indent=4)
+
+print(c.check_feat('dual wielder'))
+print(c.check_trait('cold resistance'))
+print(c.initiative())
+print(c.get_attack(c.attacks[0]))
