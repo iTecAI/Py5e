@@ -1,5 +1,5 @@
-from common import *
-from creature import *
+from .common import *
+from .creature import *
 import os, math
 
 class Character(Creature):

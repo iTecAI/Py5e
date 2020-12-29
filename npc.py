@@ -1,5 +1,5 @@
-from common import *
-from creature import *
+from .common import *
+from .creature import *
 
 import requests
 

@@ -1,4 +1,4 @@
-from common import *
+from .common import *
 
 class Level(BaseObject):
     def __init__(self,level,xp,class_string,classes):
