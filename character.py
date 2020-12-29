@@ -647,13 +647,3 @@ class Character(Creature):
             'type':atk['proficiency_category'].lower(),
             'range':_range
         })
-
-c = Character.from_gsheet('1Yd91902ynVYzd_wzR0mVck_ejaxwK5FTSa-EbyFtfBc',os.path.join('local','gapi.json'))
-with open('gsc.json','w') as f:
-    json.dump(c.to_dict(),f,indent=4)
-
-print(c.check_feat('dual wielder'))
-print(c.check_trait('cold resistance'))
-print(c.initiative())
-print(c.get_attack(c.attacks[0]))
-print(c.attack('tarath warhammer').to_dict())
