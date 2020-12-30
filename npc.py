@@ -29,7 +29,8 @@ class NPC(Creature):
         traits,
         actions,
         legendary_actions,
-        reactions
+        reactions,
+        hit_dice
     ):
         dct = cls.creature_from_parameters(
             name=name, 
@@ -54,6 +55,7 @@ class NPC(Creature):
         dct['actions'] = actions
         dct['legendary_actions'] = legendary_actions
         dct['reactions'] = reactions
+        dct['hit_dice'] = hit_dice
         return cls(dct)
     
     def __init__(self, dct):
@@ -63,6 +65,7 @@ class NPC(Creature):
         self.actions = dct['actions']
         self.legendary_actions = dct['legendary_actions']
         self.reactions = dct['reactions']
+        self.hit_dice = dct['hit_dice']
     
     @classmethod
     def from_open5e(cls,dict5e,roll_hp=False):
@@ -157,7 +160,8 @@ class NPC(Creature):
                 'description':dict5e['legendary_desc'],
                 'actions':dict5e['legendary_actions']
             }),
-            condition(dict5e['reactions']=='',[],dict5e['reactions'])
+            condition(dict5e['reactions']=='',[],dict5e['reactions']),
+            dict5e['hit_dice']
         )
     
     @classmethod
@@ -271,5 +275,6 @@ class NPC(Creature):
                 'description':cdict['legendaryActionsDescription'],
                 'actions':cdict['legendaryActions']
             }),
-            cdict['reactions']
+            cdict['reactions'],
+            str(cdict['numHitDie'])+'d'+str(cdict['hitDieSize'])+'+'+str(cdict['numHitDie']*int((scores['constitution'][0]-10)/2))
         )
