@@ -12,12 +12,12 @@ class Level(BaseObject):
 class ValueItem(BaseObject):
     def __init__(self,base,_min,_max,current=None,base_min=None,base_max=None):
         super().__init__()
-        self.current = condition(current!=False,current,base) # Current value with modifiers
+        self.current = condition(current!=None,current,base) # Current value with modifiers
         self.base = base # Base value
         self.min = _min # Minimum value
-        self.base_min = condition(base_min!=False,base_min,_min) # Base minimum
+        self.base_min = condition(base_min!=None,base_min,_min) # Base minimum
         self.max = _max # Maximum value
-        self.base_max = condition(base_max!=False,base_max,_max) # Base maximum
+        self.base_max = condition(base_max!=None,base_max,_max) # Base maximum
     
     @classmethod
     def from_elements(cls,current,base,_min,base_min,_max,base_max):

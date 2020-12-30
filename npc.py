@@ -89,7 +89,7 @@ class NPC(Creature):
             if skill in SKILLS.keys():
                 skills[skill] = [True,False,0,dict5e['skills'][skill]]
         
-        senses = {s.split(' ')[0]:int(s.split(' ')[1]) for s in dict5e['senses'].split(', ') if not s.startswith('passive')}
+        senses = {s.split(' ')[0]:int(s.split(' ')[1]) for s in dict5e['senses'].split(', ') if not s.lower().startswith('passive') and len(s.split(' ')) == 3}
 
         immunities = []
         for segment in dict5e['damage_immunities'].split('; '):
@@ -143,7 +143,7 @@ class NPC(Creature):
             },
             proficiency,
             dict5e['speed'],
-            condition(roll_hp,d20.roll(dict5e['hit_dice']).total,dict5e['hit_points']),
+            condition(roll_hp,d20.roll(dict5e['hit_dice'].replace(' . ','+')).total,dict5e['hit_points']),
             dict5e['armor_class'],
             scores,
             skills,
@@ -161,7 +161,7 @@ class NPC(Creature):
                 'actions':dict5e['legendary_actions']
             }),
             condition(dict5e['reactions']=='',[],dict5e['reactions']),
-            dict5e['hit_dice']
+            dict5e['hit_dice'].replace(' . ','+')
         )
     
     @classmethod
