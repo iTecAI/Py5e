@@ -94,10 +94,12 @@ class NPC(Creature):
         immunities = []
         for segment in dict5e['damage_immunities'].split('; '):
             for damage in DAMAGETYPES:
-                if damage in segment.split(', '):
+                if damage in segment:
                     item = {'type':damage,'flags':[]}
                     for flag in DAMAGEFLAGS:
                         if flag in segment:
+                            if flag == 'magical' and 'nonmagical' in segment:
+                                continue
                             if f"aren't {flag}" in segment:
                                 item['flags'].append('!'+flag)
                             else:
@@ -106,10 +108,12 @@ class NPC(Creature):
         resistances = []
         for segment in dict5e['damage_resistances'].split('; '):
             for damage in DAMAGETYPES:
-                if damage in segment.split(', '):
+                if damage in segment:
                     item = {'type':damage,'flags':[]}
                     for flag in DAMAGEFLAGS:
                         if flag in segment:
+                            if flag == 'magical' and 'nonmagical' in segment:
+                                continue
                             if f"aren't {flag}" in segment:
                                 item['flags'].append('!'+flag)
                             else:
@@ -118,10 +122,12 @@ class NPC(Creature):
         vulnerabilities = []
         for segment in dict5e['damage_vulnerabilities'].split('; '):
             for damage in DAMAGETYPES:
-                if damage in segment.split(', '):
+                if damage in segment:
                     item = {'type':damage,'flags':[]}
                     for flag in DAMAGEFLAGS:
                         if flag in segment:
+                            if flag == 'magical' and 'nonmagical' in segment:
+                                continue
                             if f"aren't {flag}" in segment:
                                 item['flags'].append('!'+flag)
                             else:
