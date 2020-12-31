@@ -157,7 +157,7 @@ class NPC(Creature):
             immunities,
             resistances,
             vulnerabilities,
-            [c for c in dict5e['condition_immunities'] if c in CONDITIONS],
+            [c for c in dict5e['condition_immunities'].split(', ') if c in CONDITIONS],
             dict5e['languages'].split(', '),
             eval(dict5e['challenge_rating']),
             condition(dict5e['special_abilities']=='',[],dict5e['special_abilities']),
