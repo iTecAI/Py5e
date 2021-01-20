@@ -307,9 +307,9 @@ class Character(Creature):
         preloaded['bonds'] = ''.join(condition(preloaded['bonds']==None,[],preloaded['bonds'])).strip()
         preloaded['flaws'] = ''.join(condition(preloaded['flaws']==None,[],preloaded['flaws'])).strip()
         if type(preloaded['alliesOrganizations']) == list:
-            preloaded['alliesOrganizations'] = ''.join(preloaded['alliesOrganizations']).strip()
+            preloaded['alliesOrganizations'] = ''.join([i for i in preloaded['alliesOrganizations'] if not i == []]).strip()
         if type(preloaded['backstory']) == list:
-            preloaded['backstory'] = ''.join(preloaded['backstory']).strip()
+            preloaded['backstory'] = ''.join([i for i in preloaded['backstory'] if not i == []]).strip()
         
         speeds = {}
         if not preloaded['otherSpeeds'] == None:
