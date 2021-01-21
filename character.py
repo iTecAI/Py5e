@@ -567,6 +567,13 @@ class Character(Creature):
             sum([condition(self.get_class(i['class'],subclass=i['subclass'])['init_bonus']==None,0,self.get_class(i['class'],subclass=i['subclass'])['init_bonus']) for i in self.level['classes']]),
             condition(self.check_trait('jack of all trades'),int(self.proficiency_bonus/2),0)
         ])
+    def get_init_bonus(self):
+        return sum([
+            self.abilities['dexterity'],
+            condition(self.check_feat('alert'),5,0),
+            sum([condition(self.get_class(i['class'],subclass=i['subclass'])['init_bonus']==None,0,self.get_class(i['class'],subclass=i['subclass'])['init_bonus']) for i in self.level['classes']]),
+            condition(self.check_trait('jack of all trades'),int(self.proficiency_bonus/2),0)
+        ])
     def check(self, skill_or_ability, ability_override, advantage_override):
         return sum([
             super().check(skill_or_ability, ability_override=ability_override, advantage_override=advantage_override),

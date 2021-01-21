@@ -70,7 +70,8 @@ class Creature(BaseObject):
             else:
                 save_override = None
             abilities[i] = {
-                'score':int(scores[i][0]),
+                'score_mod':0,
+                'score_manual_mod':0,
                 'score_base':int(scores[i][0]),
                 'save_proficient':bool(scores[i][1]),
                 'save_advantage':int(scores[i][2]),
@@ -86,7 +87,7 @@ class Creature(BaseObject):
                 else:
                     override = False
                     value = sum([
-                        _get_mod_from_score(abilities[SKILLS[i]]['score']),
+                        _get_mod_from_score(abilities[SKILLS[i]]['score_base']),
                         condition(skills[i][0],proficiency_bonus,0),
                         condition(skills[i][1] and skills[i][0],proficiency_bonus,0)
                     ])
