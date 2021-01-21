@@ -14,6 +14,7 @@ class Character(Creature):
         proficiency_bonus, 
         speeds, 
         max_hp, 
+        death_saves, 
         armor_class, 
         scores, 
         skills, 
@@ -27,6 +28,7 @@ class Character(Creature):
         level,
         background,
         hit_dice,
+        hit_dice_current,
         equipped,
         proficiencies,
         attacks,
@@ -63,6 +65,8 @@ class Character(Creature):
         dct['level'] = level
         dct['background'] = background
         dct['hit_dice'] = hit_dice
+        dct['hit_dice_current'] = hit_dice_current
+        dct['death_saves'] = death_saves
         dct['equipped'] = equipped
         dct['proficiencies'] = proficiencies
         dct['attacks'] = attacks
@@ -85,6 +89,8 @@ class Character(Creature):
         self.level = dct['level']
         self.background = dct['background']
         self.hit_dice = dct['hit_dice']
+        self.hit_dice_current = dct['hit_dice_current']
+        self.death_saves = dct['death_saves']
         self.equipped = dct['equipped']
         self.proficiencies = dct['proficiencies']
         self.attacks = dct['attacks']
@@ -461,6 +467,7 @@ class Character(Creature):
             preloaded['proficiency'],
             speeds,
             preloaded['hp'],
+            {'success':0,'fail':0},
             preloaded['ac'],
             scores,
             skills,
@@ -487,6 +494,7 @@ class Character(Creature):
                 'backstory':preloaded['backstory']
             },
             preloaded['hitDice'].replace(' ',''),
+            {'hd_'+i.split('d')[1]:{'max':int(i.split('d')[0]),'current':int(i.split('d')[0])} for i in preloaded['hitDice'].replace(' ','').split('+')},
             preloaded['equippedItems'],
             {
                 'armor':condition(type(preloaded['armorProfs'])==type(None),[],[x.lower() for x in str(preloaded['armorProfs']).split(', ')]),

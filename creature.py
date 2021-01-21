@@ -70,7 +70,7 @@ class Creature(BaseObject):
             else:
                 save_override = None
             abilities[i] = {
-                'score_mod':0,
+                'score_mod':[],
                 'score_manual_mod':0,
                 'score_base':int(scores[i][0]),
                 'save_proficient':bool(scores[i][1]),
