@@ -10,27 +10,18 @@ class Level(BaseObject):
         return self.class_list
 
 class ValueItem(BaseObject):
-    def __init__(self,base,_min,_max,current=None,base_min=None,base_max=None):
+    def __init__(self,base,_min,_max,mod=[],manual_mod=0):
         super().__init__()
-        self.current = condition(current!=None,current,base) # Current value with modifiers
-        self.base = base # Base value
-        self.min = _min # Minimum value
-        self.base_min = condition(base_min!=None,base_min,_min) # Base minimum
-        self.max = _max # Maximum value
-        self.base_max = condition(base_max!=None,base_max,_max) # Base maximum
-    
-    @classmethod
-    def from_elements(cls,current,base,_min,base_min,_max,base_max):
-        return cls(base,_min,_max,current=current,base_min=base_min,base_max=base_max)
+        self.base = base
+        self.min = _min
+        self.max = _max
+        self.mod = mod
+        self.manual_mod = manual_mod
 
 class HitPoints(ValueItem):
-    def __init__(self, base, _min, _max, thp, current=None, base_min=None, base_max=None):
-        super().__init__(base, _min, _max, current=current, base_min=base_min, base_max=base_max)
+    def __init__(self, base,_min,_max,thp,mod=[],manual_mod=0):
+        super().__init__(base, _min, _max, mod=mod,manual_mod=manual_mod)
         self.temporary = thp
-    
-    @classmethod
-    def from_elements(cls,current,base,_min,base_min,_max,base_max,thp):
-        return cls(base,_min,_max,thp,current=current,base_min=base_min,base_max=base_max)
 
 INPUTS = [
     'name',
@@ -211,31 +202,28 @@ class Creature(BaseObject):
         self.tags = tags
 
         self.proficiency_bonus = proficiency_bonus
-        self.speeds = {i:ValueItem.from_elements(
-            speeds[i]['current'],
+        self.speeds = {i:ValueItem(
             speeds[i]['base'],
             speeds[i]['min'],
-            speeds[i]['base_min'],
             speeds[i]['max'],
-            speeds[i]['base_max']
+            mod=speeds[i]['mod'],
+            manual_mod=speeds[i]['manual_mod']
         ) for i in speeds.keys()}
 
-        self.hit_points = HitPoints.from_elements(
-            hp['current'],
+        self.hit_points = HitPoints(
             hp['base'],
             hp['min'],
-            hp['base_min'],
             hp['max'],
-            hp['base_max'],
-            hp['temporary']
+            hp['temporary'],
+            mod=hp['mod'],
+            manual_mod=hp['manual_mod'],
         )
-        self.armor_class = ValueItem.from_elements(
-            armor_class['current'],
+        self.armor_class = ValueItem(
             armor_class['base'],
             armor_class['min'],
-            armor_class['base_min'],
             armor_class['max'],
-            armor_class['base_max']
+            mod=armor_class['mod'],
+            manual_mod=armor_class['manual_mod']
         )
 
         self.abilities = scores
