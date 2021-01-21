@@ -7,6 +7,7 @@ class Character(Creature):
     def from_parameters(
         cls, 
         name, 
+        inspiration,
         alignment,
         size,
         creature_type, 
@@ -57,6 +58,7 @@ class Character(Creature):
             condition_immunities=condition_immunities,
             languages=languages
         )
+        dct['inspiration'] = inspiration
         dct['race'] = race
         dct['level'] = level
         dct['background'] = background
@@ -78,6 +80,7 @@ class Character(Creature):
     
     def __init__(self, dct):
         super().__init__(dct)
+        self.inspiration = dct['inspiration']
         self.race = dct['race']
         self.level = dct['level']
         self.background = dct['background']
@@ -451,6 +454,7 @@ class Character(Creature):
         
         return cls.from_parameters(
             preloaded['name'],
+            False,
             preloaded['alignment'],
             str(preloaded['size']).lower(),
             {'type':'humanoid','tags':[]},
@@ -647,3 +651,21 @@ class Character(Creature):
             'type':atk['proficiency_category'].lower(),
             'range':_range
         })
+    
+    def reprocess(self):
+        # Get level from XP
+        c = 1
+        for l in LEVELXP:
+            if self.level['xp'] < l:
+                self.level['level'] = c-1
+                break
+            c+=1
+        if c == 21:
+            self.level['level'] = 20
+        
+        # Remove 0-levelled classes
+        nc = []
+        for c in self.level['classes']:
+            if c['level'] > 0:
+                nc.append(c)
+        self.level['classes'] = nc[:]

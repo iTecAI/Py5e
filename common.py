@@ -96,6 +96,8 @@ SPELLCASTING = {"full caster": [{"spells": [2,0,0,0,0,0,0,0,0]},{"spells": [3,0,
 
 ABILITY_MAP = {'str':'strength','dex':'dexterity','con':'constitution','int':'intelligence','wis':'wisdom','cha':'charisma','none':None}
 
+LEVELXP = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000]
+
 def condition(test,t,f):
     if test:
         return t
