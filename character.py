@@ -1,6 +1,6 @@
 from .common import *
 from .creature import *
-import os, math
+import os, math, copy
 
 class Character(Creature):
     @classmethod
@@ -684,3 +684,21 @@ class Character(Creature):
             if c['level'] > 0:
                 nc.append(c)
         self.level['classes'] = nc[:]
+
+        # Update hit dice to match classes
+        new_hd = {}
+        for c in self.level['classes']:
+            item = 'hd_'+self.get_class(c['class'],None)['hit_die'].replace('d','')
+            if item in new_hd.keys():
+                new_hd[item]['max'] += c['level']
+            else:
+                new_hd[item] = {'max':c['level']}
+        for n in new_hd.keys():
+            if not n in self.hit_dice_current.keys():
+                new_hd[n]['current'] = new_hd[n]['max']+0
+            else:
+                if self.hit_dice_current[n]['current'] <= new_hd[n]['max']:
+                    new_hd[n]['current'] = self.hit_dice_current[n]['current']+0
+                else:
+                    new_hd[n]['current'] = new_hd[n]['max']+0
+        self.hit_dice_current = copy.deepcopy(new_hd)
