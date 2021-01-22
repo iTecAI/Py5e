@@ -493,8 +493,8 @@ class Character(Creature):
                 'symbol':preloaded['symbolUrl'],
                 'backstory':preloaded['backstory']
             },
-            preloaded['hitDice'].replace(' ',''),
-            {'hd_'+i.split('d')[1]:{'max':int(i.split('d')[0]),'current':int(i.split('d')[0])} for i in preloaded['hitDice'].replace(' ','').split('+')},
+            preloaded['hitDice'].replace(' ','+'),
+            {'hd_'+i.split('d')[1]:{'max':int(i.split('d')[0]),'current':int(i.split('d')[0])} for i in preloaded['hitDice'].replace(' ','+').split('+')},
             preloaded['equippedItems'],
             {
                 'armor':condition(type(preloaded['armorProfs'])==type(None),[],[x.lower() for x in str(preloaded['armorProfs']).split(', ')]),
