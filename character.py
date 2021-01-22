@@ -551,23 +551,23 @@ class Character(Creature):
         for i in self.attack_info:
             if i['name'].lower() == name.lower():
                 return i
-        raise KeyError(f'Attack {name} not found.')
+        raise ValueError(f'Attack {name} not found.')
     def get_gear(self,name):
         for i in self.gear_info:
             if i['name'].lower() == name.lower():
                 return i
-        raise KeyError(f'Gear {name} not found.')
+        raise ValueError(f'Gear {name} not found.')
     def get_race(self,name):
         for i in self.race_info:
             if i['name'].lower() == name.lower():
                 return i
-        raise KeyError(f'Race {name} not found.')
+        raise ValueError(f'Race {name} not found.')
     def get_class(self,name,subclass=None):
         for i in self.class_info:
             if i['name'].lower() == name.lower():
                 if str(subclass).lower() == str(i['subclass']).lower():
                     return i
-        raise KeyError(f'Class {name} with subclass {subclass} not found.')
+        raise ValueError(f'Class {name} with subclass {subclass} not found.')
     def initiative(self):
         return sum([
             super().initiative(),
