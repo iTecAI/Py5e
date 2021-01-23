@@ -497,11 +497,11 @@ class Character(Creature):
             {'hd_'+i.split('d')[1]:{'max':int(i.split('d')[0]),'current':int(i.split('d')[0])} for i in preloaded['hitDice'].replace(' ','+').split('+')},
             preloaded['equippedItems'],
             {
-                'armor':condition(type(preloaded['armorProfs'])==type(None),[],[x.lower() for x in str(preloaded['armorProfs']).split(', ')]),
-                'weapon':condition(type(preloaded['weaponProfs'])==type(None),[],[x.lower() for x in str(preloaded['weaponProfs']).split(', ')]),
-                'vehicle':condition(type(preloaded['vehicleProfs'])==type(None),[],[x.lower() for x in str(preloaded['vehicleProfs']).split(', ')]),
-                'tool':condition(type(preloaded['toolProfs'])==type(None),[],[x.lower() for x in str(preloaded['toolProfs']).split(', ')]),
-                'other':condition(type(preloaded['otherProfs'])==type(None),[],[x.lower() for x in str(preloaded['otherProfs']).split(', ')])
+                'armor':condition(type(preloaded['armorProfs'])==type(None),[],[x.lower() for x in split_on(str(preloaded['armorProfs']),[', ',' and '])]),
+                'weapon':condition(type(preloaded['weaponProfs'])==type(None),[],[x.lower().replace(' weapons','') for x in split_on(str(preloaded['weaponProfs']),[', ',' and '])]),
+                'vehicle':condition(type(preloaded['vehicleProfs'])==type(None),[],[x.lower() for x in split_on(str(preloaded['vehicleProfs']),[', ',' and '])]),
+                'tool':condition(type(preloaded['toolProfs'])==type(None),[],[x.lower() for x in split_on(str(preloaded['toolProfs']),[', ',' and '])]),
+                'other':condition(type(preloaded['otherProfs'])==type(None),[],[x.lower() for x in split_on(str(preloaded['otherProfs']),[', ',' and '])])
             },
             preloaded['attacks'],
             spellcasting,
