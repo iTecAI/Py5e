@@ -323,6 +323,8 @@ class Character(Creature):
         speeds = {}
         if not preloaded['otherSpeeds'] == None:
             speeds = {i.split(' ')[2].lower():int(i.split(' ')[0]) for i in preloaded['otherSpeeds'].split(', ')}
+        else:
+            speeds = {i.split(' ')[2].lower():int(i.split(' ')[0]) for i in ['0 ft. fly','0 ft. swim','0 ft. climb','0 ft. burrow']}
         speeds['walk'] = preloaded['speed']
 
         scores = {}
