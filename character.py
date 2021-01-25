@@ -704,3 +704,10 @@ class Character(Creature):
                 else:
                     new_hd[n]['current'] = new_hd[n]['max']+0
         self.hit_dice_current = copy.deepcopy(new_hd)
+
+        # Clear null vals in atks
+        new_attacks = []
+        for a in self.attacks:
+            if a != None:
+                new_attacks.append(a)
+        self.attacks = new_attacks[:]
