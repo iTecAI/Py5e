@@ -711,3 +711,10 @@ class Character(Creature):
             if a != None:
                 new_attacks.append(a)
         self.attacks = new_attacks[:]
+
+        # Clear null vals in equipped
+        new_eq = []
+        for e in self.equipped:
+            if e != None and e != '' and e != 0:
+                new_eq.append(e)
+        self.equipped = new_eq[:]
