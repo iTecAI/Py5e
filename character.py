@@ -785,14 +785,14 @@ class Character(Creature):
         new_casting_classes = []
         for c in self.spellcasting['caster_classes']:
             for k in self.level['classes']:
-                if c['class']['class'].lower() == k['class'].lower() and c['class']['subclass'].lower() == k['subclass'].lower():
+                if c['class']['class'].lower() == k['class'].lower() and str(c['class']['subclass']).lower() == str(k['subclass']).lower():
                     new_casting_classes.append(copy.deepcopy(c))
                     break
         for k in self.level['classes']:
-            if self.get_class(k['class'], subclass=k['subclass'])['spellcasting_type'] != None:
+            if self.get_class(k['class'], subclass=condition(k['subclass'] in [0,None,'','0'],None,k['subclass']))['spellcasting_type'] != None:
                 caster_class = {
                     'class': copy.deepcopy(k),
-                    'type': self.get_class(k['class'], subclass=k['subclass'])['spellcasting_type'].lower().replace(' ','_'),
+                    'type': self.get_class(k['class'], subclass=condition(k['subclass'] in [0,None,'','0'],None,k['subclass']))['spellcasting_type'].lower().replace(' ','_'),
                     'mods': {
                         'save': {
                             'manual': 0,
@@ -828,5 +828,8 @@ class Character(Creature):
                         found = True
                 if not found:
                     new_casting_classes.append(copy.deepcopy(caster_class))
+        for c in new_casting_classes:
+            if c['class']['subclass'] in [0,'0',[],None]:
+                c['class']['subclass'] = None
 
         self.spellcasting['caster_classes'] = copy.deepcopy(new_casting_classes)
