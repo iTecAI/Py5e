@@ -502,7 +502,6 @@ class Character(Creature):
             }, None),
             'spells': [preloaded['spell'+str(i)] for i in range(10)]
         }
-
         return cls.from_parameters(
             preloaded['name'],
             False,
@@ -541,7 +540,7 @@ class Character(Creature):
             preloaded['hitDice'].replace(' ', '+'),
             {'hd_'+i.split('d')[1]: {'max': int(i.split('d')[0]), 'current': int(i.split('d')[0])}
              for i in preloaded['hitDice'].replace(' ', '+').split('+')},
-            preloaded['equippedItems'],
+            [i for i in preloaded['equippedItems'] if type(i) != list],
             {
                 'armor': condition(type(preloaded['armorProfs']) == type(None), [], [x.lower() for x in split_on(str(preloaded['armorProfs']), [', ', ' and '])]),
                 'weapon': condition(type(preloaded['weaponProfs']) == type(None), [], [x.lower().replace(' weapons', '') for x in split_on(str(preloaded['weaponProfs']), [', ', ' and '])]),
@@ -575,7 +574,7 @@ class Character(Creature):
                     'items': preloaded['inventory']
                 }
             },
-            preloaded['traits'],
+            [i for i in preloaded['traits'] if type(i) != list],
             preloaded['attackInfo'],
             preloaded['gearInfo'],
             preloaded['raceInfo'],
@@ -778,7 +777,7 @@ class Character(Creature):
         # Clear null vals in equipped
         new_eq = []
         for e in self.equipped:
-            if e != None and e != '' and e != 0:
+            if e != None and e != '' and e != 0 and e != []:
                 new_eq.append(e)
         self.equipped = new_eq[:]
 
@@ -830,5 +829,4 @@ class Character(Creature):
                 if not found:
                     new_casting_classes.append(copy.deepcopy(caster_class))
 
-        self.spellcasting['caster_classes'] = copy.deepcopy(
-            new_casting_classes)
+        self.spellcasting['caster_classes'] = copy.deepcopy(new_casting_classes)
