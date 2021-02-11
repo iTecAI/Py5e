@@ -984,5 +984,12 @@ class Character(Creature):
                     c['current'] = c['max'] + 0
                 if c['current'] < 0:
                     c['current'] = 0
+        
+        for l in range(len(spellcasting['spells'])):
+            new_spells = []
+            for s in spellcasting['spells'][l]:
+                if not s['name'] in [None,'',0,[],'0']:
+                    new_spells.append(copy.deepcopy(s))
+            spellcasting['spells'][l] = new_spells[:]
 
         self.spellcasting = copy.deepcopy(spellcasting)
