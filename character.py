@@ -500,7 +500,7 @@ class Character(Creature):
                 'levels': level_casting['pact'],
                 'slots': [{'current': x, 'max': x} for x in SPELLCASTING['pact magic'][level_casting['pact']-1]['spells']]
             }, None),
-            'spells': [preloaded['spell'+str(i)] for i in range(10)]
+            'spells': [[{'name':s,'prepared':i==0} for s in preloaded['spell'+str(i)]] for i in range(10)]
         }
         return cls.from_parameters(
             preloaded['name'],
