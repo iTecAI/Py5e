@@ -570,6 +570,7 @@ class Character(Creature):
                         'pp': condition(preloaded['coinPp'] == None, 0, preloaded['coinPp'])
                     },
                     'apply_weight': True,
+                    'coin_weight': True,
                     'removable': False,
                     'items': preloaded['inventory']
                 }
