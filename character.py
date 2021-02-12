@@ -500,7 +500,7 @@ class Character(Creature):
                 'levels': level_casting['pact'],
                 'slots': [{'current': x, 'max': x} for x in SPELLCASTING['pact magic'][level_casting['pact']-1]['spells']]
             }, None),
-            'spells': [[{'name':s,'prepared':i==0} for s in preloaded['spell'+str(i)]] for i in range(10)]
+            'spells': [[{'name': s, 'prepared': i == 0} for s in preloaded['spell'+str(i)]] for i in range(10)]
         }
         return cls.from_parameters(
             preloaded['name'],
@@ -572,7 +572,9 @@ class Character(Creature):
                     'apply_weight': True,
                     'coin_weight': True,
                     'removable': False,
-                    'items': preloaded['inventory']
+                    'items': preloaded['inventory'],
+                    'current_weight': sum([i['weight'] for i in preloaded['inventory']]),
+                    'max_weight': 0
                 }
             },
             [i for i in preloaded['traits'] if type(i) != list],
@@ -888,22 +890,23 @@ class Character(Creature):
                 multi += 1
             if c['type'] == 'pact magic':
                 level_casting['pact'] += c['class']['level']
-        
+
         if level_casting['pact'] > 0:
             slots = []
             if self.spellcasting['pact_magic'] == None:
                 for x in SPELLCASTING['pact magic'][level_casting['pact']-1]['spells']:
-                    slots.append({'current':x,'max':x})
+                    slots.append({'current': x, 'max': x})
             else:
                 for x in SPELLCASTING['pact magic'][level_casting['pact']-1]['spells']:
-                    slots.append({'current': self.spellcasting['pact_magic']['slots'][SPELLCASTING['pact magic'][level_casting['pact']-1]['spells'].index(x)]['current'], 'max':x})
+                    slots.append({'current': self.spellcasting['pact_magic']['slots'][SPELLCASTING['pact magic']
+                                                                                      [level_casting['pact']-1]['spells'].index(x)]['current'], 'max': x})
             pact_magic = {
                 'levels': level_casting['pact'],
                 'slots': slots
             }
         else:
             pact_magic = None
-        
+
         if multi >= 0:
             slots = []
             if self.spellcasting['main_casting'] == None:
@@ -922,8 +925,8 @@ class Character(Creature):
                             [i['class']['level']
                                 for i in sc_classes if not i['type'] == 'pact_magic'][0]
                         )-1
-                    ]['spells']:
-                    slots.append({'current':x,'max':x})
+                ]['spells']:
+                    slots.append({'current': x, 'max': x})
             else:
                 for x in SPELLCASTING[
                         condition(
@@ -940,23 +943,23 @@ class Character(Creature):
                             [i['class']['level']
                                 for i in sc_classes if not i['type'] == 'pact_magic'][0]
                         )-1
-                    ]['spells']:
-                    slots.append({'current': self.spellcasting['main_casting']['slots'][SPELLCASTING[
-                            condition(
-                                multi > 0,
-                                'multiclass',
-                                [i['type']
-                                 for i in sc_classes if not i['type'] == 'pact_magic'][0]
-                            )
-                        ][
-                            condition(
-                                multi > 0,
-                                level_casting['full']+math.floor(
-                                    level_casting['half']/2)+math.floor(level_casting['third']/3),
-                                [i['class']['level']
-                                 for i in sc_classes if not i['type'] == 'pact_magic'][0]
-                            )-1
-                        ]['spells'].index(x)]['current'], 'max':x})
+                ]['spells']:
+                    sc = SPELLCASTING[
+                        condition(
+                            multi > 0,
+                            'multiclass',
+                            [i['type'] for i in sc_classes if not i['type'] == 'pact_magic'][0]
+                        )
+                    ][
+                        condition(
+                            multi > 0,
+                            level_casting['full']+math.floor(
+                                level_casting['half']/2)+math.floor(level_casting['third']/3),
+                            [i['class']['level']
+                             for i in sc_classes if not i['type'] == 'pact_magic'][0]
+                        )-1
+                    ]
+                    slots.append({'current': self.spellcasting['main_casting']['slots'][sc['spells'].index(x)]['current'], 'max': x})
             main_casting = {
                 'class': condition(multi > 0, 'multiclass', [i['class'] for i in sc_classes if not i['type'] == 'pact_magic'][0]),
                 'levels': condition(multi > 0, level_casting['full']+math.floor(level_casting['half']/2)+math.floor(level_casting['third']/3), [i['class']['level'] for i in sc_classes if not i['type'] == 'pact_magic'][0]),
@@ -978,19 +981,49 @@ class Character(Creature):
                     c['current'] = c['max'] + 0
                 if c['current'] < 0:
                     c['current'] = 0
-        
+
         if spellcasting['pact_magic'] != None:
             for c in spellcasting['pact_magic']['slots']:
                 if c['current'] > c['max']:
                     c['current'] = c['max'] + 0
                 if c['current'] < 0:
                     c['current'] = 0
-        
+
         for l in range(len(spellcasting['spells'])):
             new_spells = []
             for s in spellcasting['spells'][l]:
-                if not s['name'] in [None,'',0,[],'0']:
+                if not s['name'] in [None, '', 0, [], '0']:
                     new_spells.append(copy.deepcopy(s))
             spellcasting['spells'][l] = new_spells[:]
 
         self.spellcasting = copy.deepcopy(spellcasting)
+
+        # Inventory
+        if not 'main' in self.inventory.keys():
+            self.inventory['main'] = {
+                'display_name': 'Main Inventory',
+                'coin': {
+                    'cp': 0,
+                    'sp': 0,
+                    'ep': 0,
+                    'gp': 0,
+                    'pp': 0
+                },
+                'apply_weight': True,
+                'coin_weight': True,
+                'removable': False,
+                'items': [],
+                'current_weight': 0,
+                'max_weight': 0
+            }
+        
+        self.inventory['main']['max_weight'] = 15*(self.abilities['strength']['score_base'] + self.abilities['strength']['score_manual_mod'] + sum(self.abilities['strength']['score_mod']))
+
+        for c in self.inventory.keys():
+            self.inventory[c]['current_weight'] = sum([i['weight'] for i in self.inventory[c]['items']]) + condition(self.inventory[c]['coin_weight'],0.02*sum(list(self.inventory[c]['coin'].values())),0)
+        
+        self.inventory['main']['current_weight'] = sum(
+            [condition(self.inventory[x]['apply_weight'],sum([
+                sum([i['weight'] for i in self.inventory[x]['items']]) + condition(self.inventory[x]['coin_weight'],0.02*sum(list(self.inventory[x]['coin'].values())),0)
+            ]),0) for x in self.inventory.keys()]
+        )
