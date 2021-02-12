@@ -573,7 +573,7 @@ class Character(Creature):
                     'coin_weight': True,
                     'removable': False,
                     'items': preloaded['inventory'],
-                    'current_weight': sum([i['weight'] for i in preloaded['inventory']]),
+                    'current_weight': sum([i['weight']*i['quantity'] for i in preloaded['inventory']]),
                     'max_weight': 0
                 }
             },
@@ -1020,10 +1020,19 @@ class Character(Creature):
         self.inventory['main']['max_weight'] = 15*(self.abilities['strength']['score_base'] + self.abilities['strength']['score_manual_mod'] + sum(self.abilities['strength']['score_mod']))
 
         for c in self.inventory.keys():
-            self.inventory[c]['current_weight'] = sum([i['weight'] for i in self.inventory[c]['items']]) + condition(self.inventory[c]['coin_weight'],0.02*sum(list(self.inventory[c]['coin'].values())),0)
+            self.inventory[c]['current_weight'] = sum([i['weight']*i['quantity'] for i in self.inventory[c]['items']]) + condition(self.inventory[c]['coin_weight'],0.02*sum(list(self.inventory[c]['coin'].values())),0)
         
         self.inventory['main']['current_weight'] = sum(
             [condition(self.inventory[x]['apply_weight'],sum([
-                sum([i['weight'] for i in self.inventory[x]['items']]) + condition(self.inventory[x]['coin_weight'],0.02*sum(list(self.inventory[x]['coin'].values())),0)
+                sum([i['weight']*i['quantity'] for i in self.inventory[x]['items']]) + condition(self.inventory[x]['coin_weight'],0.02*sum(list(self.inventory[x]['coin'].values())),0)
             ]),0) for x in self.inventory.keys()]
         )
+
+        for i in self.inventory.keys():
+            new_items = []
+            for item in self.inventory[i]['items']:
+                if item['quantity'] > 0 and not item['name'] in ['',None,0,'0']:
+                    new_items.append(item.copy())
+            self.inventory[i]['items'] = copy.deepcopy(new_items)
+
+            
