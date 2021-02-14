@@ -1069,3 +1069,26 @@ class Character(Creature):
             else:
                 self.armor_class.base = 10 + sum(gear_ac_bonuses)
 
+        # Update proficiency bonus
+        self.proficiency_bonus = math.ceil(self.level['level'] / 4) + 1
+
+        # Update max HP
+        new_max = 0
+        first = True
+        for c in self.level['classes']:
+            c_info = self.get_class(c['class'])
+            if first:
+                new_max += sum([
+                    (c['level']-1) * math.ceil(int(c_info['hit_die'].strip('d')) / 2),
+                    int(c_info['hit_die'].strip('d')),
+                    _get_mod_from_score(self.abilities['constitution']['score_base']+self.abilities['constitution']['score_manual_mod']+sum(self.abilities['constitution']['score_mod'])) * (c['level'] - 1)
+                ])
+                first = False
+            else:
+                new_max += sum([
+                    (c['level']) * math.ceil(int(c_info['hit_die'].strip('d')) / 2),
+                    _get_mod_from_score(self.abilities['constitution']['score_base']+self.abilities['constitution']['score_manual_mod']+sum(self.abilities['constitution']['score_mod'])) * c['level']
+                ])
+        new_max += _get_mod_from_score(self.abilities['constitution']['score_base']+self.abilities['constitution']['score_manual_mod']+sum(self.abilities['constitution']['score_mod'])) * self.level['level']
+        self.hit_points.max = new_max + 0
+
