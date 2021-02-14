@@ -1,5 +1,6 @@
 from .common import *
 from .creature import *
+from .creature import _get_mod_from_score
 import os
 import math
 import copy
@@ -948,7 +949,8 @@ class Character(Creature):
                         condition(
                             multi > 0,
                             'multiclass',
-                            [i['type'] for i in sc_classes if not i['type'] == 'pact_magic'][0]
+                            [i['type']
+                                for i in sc_classes if not i['type'] == 'pact_magic'][0]
                         )
                     ][
                         condition(
@@ -959,7 +961,8 @@ class Character(Creature):
                              for i in sc_classes if not i['type'] == 'pact_magic'][0]
                         )-1
                     ]
-                    slots.append({'current': self.spellcasting['main_casting']['slots'][sc['spells'].index(x)]['current'], 'max': x})
+                    slots.append({'current': self.spellcasting['main_casting']['slots'][sc['spells'].index(
+                        x)]['current'], 'max': x})
             main_casting = {
                 'class': condition(multi > 0, 'multiclass', [i['class'] for i in sc_classes if not i['type'] == 'pact_magic'][0]),
                 'levels': condition(multi > 0, level_casting['full']+math.floor(level_casting['half']/2)+math.floor(level_casting['third']/3), [i['class']['level'] for i in sc_classes if not i['type'] == 'pact_magic'][0]),
@@ -1016,23 +1019,53 @@ class Character(Creature):
                 'current_weight': 0,
                 'max_weight': 0
             }
-        
-        self.inventory['main']['max_weight'] = 15*(self.abilities['strength']['score_base'] + self.abilities['strength']['score_manual_mod'] + sum(self.abilities['strength']['score_mod']))
+
+        self.inventory['main']['max_weight'] = round(
+            15*(self.abilities['strength']['score_base'] + self.abilities['strength']['score_manual_mod'] + sum(self.abilities['strength']['score_mod'])), 2)
 
         for c in self.inventory.keys():
-            self.inventory[c]['current_weight'] = sum([i['weight']*i['quantity'] for i in self.inventory[c]['items']]) + condition(self.inventory[c]['coin_weight'],0.02*sum(list(self.inventory[c]['coin'].values())),0)
-        
-        self.inventory['main']['current_weight'] = sum(
-            [condition(self.inventory[x]['apply_weight'],sum([
-                sum([i['weight']*i['quantity'] for i in self.inventory[x]['items']]) + condition(self.inventory[x]['coin_weight'],0.02*sum(list(self.inventory[x]['coin'].values())),0)
-            ]),0) for x in self.inventory.keys()]
-        )
+            self.inventory[c]['current_weight'] = round(sum([i['weight']*i['quantity'] for i in self.inventory[c]['items']]) + condition(
+                self.inventory[c]['coin_weight'], 0.02*sum(list(self.inventory[c]['coin'].values())), 0), 2)
+
+        self.inventory['main']['current_weight'] = round(sum(
+            [condition(self.inventory[x]['apply_weight'], sum([
+                sum([i['weight']*i['quantity'] for i in self.inventory[x]['items']]) + condition(
+                    self.inventory[x]['coin_weight'], 0.02*sum(list(self.inventory[x]['coin'].values())), 0)
+            ]), 0) for x in self.inventory.keys()]
+        ), 2)
 
         for i in self.inventory.keys():
             new_items = []
             for item in self.inventory[i]['items']:
-                if item['quantity'] > 0 and not item['name'] in ['',None,0,'0']:
+                if item['quantity'] > 0 and not item['name'] in ['', None, 0, '0']:
                     new_items.append(item.copy())
             self.inventory[i]['items'] = copy.deepcopy(new_items)
+        
+        # Update AC
+        gear_ac_bonuses = []
+        armors = 0
+        for i in self.equipped:
+            obj = self.get_gear(i)
+            if type(obj['required_str']) == int:
+                if self.abilities['strength']['score_base']+self.abilities['strength']['score_manual_mod']+sum(self.abilities['strength']['score_mod']) < obj['required_str']:
+                    continue
+            if type(obj['ac_bonus']) == int:
+                bonus = obj['ac_bonus']
+                if type(obj['enchantment_bonus']) == int:
+                    bonus += obj['enchantment_bonus']
+                if 'armor' in obj['category'].lower():
+                    armors += 1
+                    if type(obj['max_dex']) == int:
+                        bonus += min([_get_mod_from_score(self.abilities['dexterity']['score_base']+self.abilities['dexterity']['score_manual_mod']+sum(self.abilities['dexterity']['score_mod'])),obj['max_dex']])
+                    else:
+                        bonus += _get_mod_from_score(self.abilities['dexterity']['score_base']+self.abilities['dexterity']['score_manual_mod']+sum(self.abilities['dexterity']['score_mod']))
+                gear_ac_bonuses.append(bonus)
+        
+        if len(gear_ac_bonuses) == 0:
+            self.armor_class.base = 10 + _get_mod_from_score(self.abilities['dexterity']['score_base']+self.abilities['dexterity']['score_manual_mod']+sum(self.abilities['dexterity']['score_mod']))
+        else:
+            if armors == 0:
+                self.armor_class.base = 10 + sum(gear_ac_bonuses) + _get_mod_from_score(self.abilities['dexterity']['score_base']+self.abilities['dexterity']['score_manual_mod']+sum(self.abilities['dexterity']['score_mod']))
+            else:
+                self.armor_class.base = 10 + sum(gear_ac_bonuses)
 
-            
