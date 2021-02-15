@@ -1,6 +1,7 @@
 import random
 import d20
 import json
+import copy
 
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -60,6 +61,23 @@ class BaseObject:
                     tld.append(i)
         return tld
 
+def error(dct,key,default):
+    if type(key) == list:
+        for i in key:
+            if i in dct.keys():
+                out = copy.deepcopy(dct[i])
+        out = copy.deepcopy(default)
+    else:
+        try:
+            out = copy.deepcopy(dct[key])
+        except KeyError as e:
+            out = copy.deepcopy(default)
+    
+    if type(default) == dict:
+        for i in default.keys():
+            if not i in out.keys():
+                out[i] = copy.deepcopy(default[i])
+    return out
 
 SKILLS = {
     'acrobatics':'dexterity',

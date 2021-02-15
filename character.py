@@ -1044,23 +1044,27 @@ class Character(Creature):
         # Update AC
         gear_ac_bonuses = []
         armors = 0
+        st_mod = 0
         for i in self.equipped:
             obj = self.get_gear(i)
-            if type(obj['required_str']) == int:
+            if type(error(obj,'required_str',None)) == int:
                 if self.abilities['strength']['score_base']+self.abilities['strength']['score_manual_mod']+sum(self.abilities['strength']['score_mod']) < obj['required_str']:
                     continue
-            if type(obj['ac_bonus']) == int:
+            if type(error(obj,'ac_bonus',None)) == int:
                 bonus = obj['ac_bonus']
                 if type(obj['enchantment_bonus']) == int:
                     bonus += obj['enchantment_bonus']
                 if 'armor' in obj['category'].lower():
+                    if str(error(obj,'stealth_mod','')).lower() == 'disadvantage':
+                        st_mod = -1
+                    elif str(error(obj,'stealth_mod','')).lower() == 'advantage':
+                        st_mod = 1
                     armors += 1
                     if type(obj['max_dex']) == int:
                         bonus += min([_get_mod_from_score(self.abilities['dexterity']['score_base']+self.abilities['dexterity']['score_manual_mod']+sum(self.abilities['dexterity']['score_mod'])),obj['max_dex']])
                     else:
                         bonus += _get_mod_from_score(self.abilities['dexterity']['score_base']+self.abilities['dexterity']['score_manual_mod']+sum(self.abilities['dexterity']['score_mod']))
                 gear_ac_bonuses.append(bonus)
-        
         if len(gear_ac_bonuses) == 0:
             self.armor_class.base = 10 + _get_mod_from_score(self.abilities['dexterity']['score_base']+self.abilities['dexterity']['score_manual_mod']+sum(self.abilities['dexterity']['score_mod']))
         else:
@@ -1068,7 +1072,9 @@ class Character(Creature):
                 self.armor_class.base = 10 + sum(gear_ac_bonuses) + _get_mod_from_score(self.abilities['dexterity']['score_base']+self.abilities['dexterity']['score_manual_mod']+sum(self.abilities['dexterity']['score_mod']))
             else:
                 self.armor_class.base = 10 + sum(gear_ac_bonuses)
-
+        
+        if st_mod != 0:
+            self.skills['stealth']['advantage'] = st_mod
         # Update proficiency bonus
         self.proficiency_bonus = math.ceil(self.level['level'] / 4) + 1
 
