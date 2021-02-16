@@ -574,7 +574,7 @@ class Character(Creature):
                     'coin_weight': True,
                     'removable': False,
                     'items': preloaded['inventory'],
-                    'current_weight': sum([i['weight']*i['quantity'] for i in preloaded['inventory']]),
+                    'current_weight': sum([condition(i['weight']==None,0,float(str(i['weight']).rstrip(' lb.')))*condition(i['quantity']==None,1,i['quantity']) for i in preloaded['inventory']]),
                     'max_weight': 0
                 }
             },
@@ -1024,12 +1024,12 @@ class Character(Creature):
             15*(self.abilities['strength']['score_base'] + self.abilities['strength']['score_manual_mod'] + sum(self.abilities['strength']['score_mod'])), 2)
 
         for c in self.inventory.keys():
-            self.inventory[c]['current_weight'] = round(sum([i['weight']*i['quantity'] for i in self.inventory[c]['items']]) + condition(
+            self.inventory[c]['current_weight'] = round(sum([condition(i['weight']==None,0,float(str(i['weight']).rstrip(' lb.')))*condition(i['quantity']==None,1,i['quantity']) for i in self.inventory[c]['items']]) + condition(
                 self.inventory[c]['coin_weight'], 0.02*sum(list(self.inventory[c]['coin'].values())), 0), 2)
 
         self.inventory['main']['current_weight'] = round(sum(
             [condition(self.inventory[x]['apply_weight'], sum([
-                sum([i['weight']*i['quantity'] for i in self.inventory[x]['items']]) + condition(
+                sum([condition(i['weight']==None,0,float(str(i['weight']).rstrip(' lb.')))*condition(i['quantity']==None,1,i['quantity']) for i in self.inventory[x]['items']]) + condition(
                     self.inventory[x]['coin_weight'], 0.02*sum(list(self.inventory[x]['coin'].values())), 0)
             ]), 0) for x in self.inventory.keys()]
         ), 2)
@@ -1037,7 +1037,7 @@ class Character(Creature):
         for i in self.inventory.keys():
             new_items = []
             for item in self.inventory[i]['items']:
-                if item['quantity'] > 0 and not item['name'] in ['', None, 0, '0']:
+                if condition(item['quantity']==None,1,item['quantity']) > 0 and not item['name'] in ['', None, 0, '0']:
                     new_items.append(item.copy())
             self.inventory[i]['items'] = copy.deepcopy(new_items)
         
@@ -1084,17 +1084,19 @@ class Character(Creature):
         for c in self.level['classes']:
             c_info = self.get_class(c['class'])
             if first:
-                new_max += sum([
-                    (c['level']-1) * math.ceil(int(c_info['hit_die'].strip('d')) / 2),
+                hpl = [
+                    (c['level']-1) * (math.ceil(int(c_info['hit_die'].strip('d')) / 2) + 1),
                     int(c_info['hit_die'].strip('d')),
                     _get_mod_from_score(self.abilities['constitution']['score_base']+self.abilities['constitution']['score_manual_mod']+sum(self.abilities['constitution']['score_mod'])) * (c['level'] - 1)
-                ])
+                ]
+                new_max += sum(hpl)
                 first = False
             else:
-                new_max += sum([
-                    (c['level']) * math.ceil(int(c_info['hit_die'].strip('d')) / 2),
+                hpl = [
+                    (c['level']) * (math.ceil(int(c_info['hit_die'].strip('d')) / 2) + 1),
                     _get_mod_from_score(self.abilities['constitution']['score_base']+self.abilities['constitution']['score_manual_mod']+sum(self.abilities['constitution']['score_mod'])) * c['level']
-                ])
-        new_max += _get_mod_from_score(self.abilities['constitution']['score_base']+self.abilities['constitution']['score_manual_mod']+sum(self.abilities['constitution']['score_mod'])) * self.level['level']
+                ]
+                new_max += sum(hpl)
+        new_max += _get_mod_from_score(self.abilities['constitution']['score_base']+self.abilities['constitution']['score_manual_mod']+sum(self.abilities['constitution']['score_mod']))
         self.hit_points.max = new_max + 0
 
