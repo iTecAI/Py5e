@@ -72,7 +72,7 @@ class Creature(BaseObject):
             abilities[i] = {
                 'score_mod':[],
                 'score_manual_mod':0,
-                'score_base':int(scores[i][0]),
+                'score_base':int(condition(scores[i][0]==None,'0',scores[i][0])),
                 'save_proficient':bool(scores[i][1]),
                 'save_advantage':int(scores[i][2]),
                 'save_override':save_override
@@ -105,7 +105,7 @@ class Creature(BaseObject):
                     'proficient':False,
                     'expert':False,
                     'advantage':0,
-                    'value':_get_mod_from_score(abilities[SKILLS[i]]['score']),
+                    'value':_get_mod_from_score(abilities[SKILLS[i]]['score_base']),
                     'override':False
                 }
         

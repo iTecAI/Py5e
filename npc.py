@@ -30,7 +30,8 @@ class NPC(Creature):
         actions,
         legendary_actions,
         reactions,
-        hit_dice
+        hit_dice,
+        image
     ):
         dct = cls.creature_from_parameters(
             name=name, 
@@ -56,6 +57,7 @@ class NPC(Creature):
         dct['legendary_actions'] = legendary_actions
         dct['reactions'] = reactions
         dct['hit_dice'] = hit_dice
+        dct['image'] = image
         return cls(dct)
     
     def __init__(self, dct):
@@ -66,6 +68,7 @@ class NPC(Creature):
         self.legendary_actions = dct['legendary_actions']
         self.reactions = dct['reactions']
         self.hit_dice = dct['hit_dice']
+        self.image = dct['image']
     
     @classmethod
     def from_open5e(cls,dict5e,roll_hp=False):
@@ -167,7 +170,8 @@ class NPC(Creature):
                 'actions':dict5e['legendary_actions']
             }),
             condition(dict5e['reactions']=='',[],dict5e['reactions']),
-            dict5e['hit_dice'].replace(' . ','+')
+            dict5e['hit_dice'].replace(' . ','+'),
+            dict5e['img_main']
         )
     
     @classmethod
@@ -178,9 +182,9 @@ class NPC(Creature):
         for s in cdict['speed'].split(' ft., '):
             item = s.split(' ')
             if len(item) == 1:
-                speeds['walk'] = int(item[0])
+                speeds['walk'] = int(condition(''.join([i for i in item[0] if i in '0123456789'])=='','0',''.join([i for i in item[0] if i in '0123456789'])))
             elif len(item) == 2:
-                speeds[item[0]] = int(item[1])
+                speeds[item[0]] = int(condition(''.join([i for i in item[1] if i in '0123456789'])=='','0',''.join([i for i in item[1] if i in '0123456789'])))
         
         scores = {}
         for ability in ABILITIES:
@@ -268,7 +272,7 @@ class NPC(Creature):
             cdict['armorClass'],
             scores,
             skills,
-            {x.split(' ')[0]:int(x.split(' ')[1]) for x in cdict['senses'] if x.endswith('ft.')},
+            {x.split(' ')[0]:int(int(condition(''.join([i for i in x.split(' ')[1] if i in '0123456789'])=='','0',''.join([i for i in x.split(' ')[1] if i in '0123456789'])))) for x in cdict['senses'] if x.endswith('ft.')},
             immunities,
             resistances,
             vulnerabilities,
@@ -282,5 +286,6 @@ class NPC(Creature):
                 'actions':cdict['legendaryActions']
             }),
             cdict['reactions'],
-            str(cdict['numHitDie'])+'d'+str(cdict['hitDieSize'])+'+'+str(cdict['numHitDie']*int((scores['constitution'][0]-10)/2))
+            str(cdict['numHitDie'])+'d'+str(cdict['hitDieSize'])+'+'+str(cdict['numHitDie']*int((scores['constitution'][0]-10)/2)),
+            _cdict['flavor']['imageUrl']
         )
